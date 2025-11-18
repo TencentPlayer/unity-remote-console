@@ -63,6 +63,14 @@ public class Example : MonoBehaviour
 
 - 完整交互按钮示例见 `Assets/Script/Sample.cs`（包含连接、断开、开始/停止转发、按钮状态联动）。
 
+## 示例视频
+
+- 录屏演示：`doc/screenrecord.mov`
+- 直接链接查看：[`doc/screenrecord.mov`](../../doc/screenrecord.mov)
+- 在支持 HTML5 的查看器中可内嵌预览：
+
+<video src="../../doc/screenrecord.mov" controls preload="metadata" style="max-width: 100%; height: auto;"></video>
+
 ---
 
 如需更详细的接入示例或 iOS 配置样例，请提出你的目标平台与部署方式，我可以补充相应说明。

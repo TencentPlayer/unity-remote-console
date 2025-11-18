@@ -1,15 +1,7 @@
-# Changelog
+# Changelog（单一来源）
 
-所有值得记录的变更都会在此文档中维护。
+为避免重复维护，变更记录统一在组件目录维护：
 
-## [0.2.0] - 2025-11-18
-- README：统一为基于 `RCLogManager` 的接入方式，示例参考 `Assets/Script/Sample.cs`。
-- LICENSE：更新为 MIT License，并在末尾附加 Unity 相关材料的说明。
-- 文档：补充 iOS 本地网络权限与 ATS / `wss://` 的使用注意事项。
-- 维护：新增并启用 CHANGELOG 文件。
+- 请查看：`Assets/RemoteConsole/CHANGELOG`
 
-## [0.1.0] - 2025-11-01
-- 初始发布：设备端推送日志到编辑器，客户端筛选，握手信息上报，发送队列循环。
-
-## [1.0.0] - 2019-01-08
-This is the first release of Unity UI as a built in package.
+根目录仅保留该指引以便快速定位。
