@@ -1,0 +1,50 @@
+# =============== #
+# Unity 2020+ 通用 #
+# =============== #
+
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/
+[Mm]emoryCaptures/
+.syslock
+.utmp
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+
+# macOS & Windows 桌面垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Rider / VS / VSCode
+.vscode/
+.idea/
+*.sln.iml
+*.csproj.DotSettings
+.vs/
+
+# 可选：如果团队统一用包管理，可忽略本地缓存
+[Pp]ackages/packages-lock.json
+
+# 可选：Addressables 本地缓存
+[Aa]ssets/[Aa]ddressableAssetsData/*/*/*/*.bin*
+[Aa]ssets/[Aa]ddressableAssetsData/*/*/*/*.hash*
+
+# 可选：大型素材源文件（PSD、Blend、FBX 源）
+*.psd
+*.blend
+*.max
+*.ma
+*.mb
+*.fbx.orig
+native

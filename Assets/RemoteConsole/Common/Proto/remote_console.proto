@@ -1,0 +1,32 @@
+syntax = "proto3";
+package remoteconsole;
+
+// 通用日志记录消息，用于移动端 -> 编辑器 传输
+message LogRecord {
+  int64 timestamp = 1;        // Unix 毫秒时间戳
+  int32 level = 2;            // 0:Log,1:Warning,2:Error,3:Exception,4:Assert
+  string tag = 3;             // 可选，日志标签或分类
+  string message = 4;         // 日志文本
+  string stackTrace = 5;      // 堆栈（对于 Error/Exception）
+  string deviceId = 6;        // 设备标识
+  string appName = 7;         // 应用名称
+  string sessionId = 8;       // 会话ID
+  int32 threadId = 9;         // 线程ID
+}
+
+// 设备握手，连接建立后可发送一次
+message Handshake {
+  string deviceId = 1;
+  string platform = 2;   // iOS / Android
+  string appName = 3;
+  string appVersion = 4;
+  string sessionId = 5;
+}
+
+// 包装消息，支持多种类型扩展
+message Envelope {
+  oneof kind {
+    Handshake handshake = 1;
+    LogRecord log = 2;
+  }
+}
