@@ -5,16 +5,17 @@ using UnityEngine;
 namespace RConsole.Runtime
 {
     // 单例日志管理器：负责连接远端控制台与转发 Unity 日志
-    public class RCLogManager
+    public class RConsoleCtrl
     {
-        private static RCLogManager _instance;
-        public static RCLogManager Instance => _instance ??= new RCLogManager();
+        private static RConsoleCtrl _instance;
+        public static RConsoleCtrl Instance => _instance ??= new RConsoleCtrl();
 
         private RConsoleClient _client;
+        public RConsoleClient WebSocket => _client;
         private bool _capturingLogs;
         public bool IsCapturingLogs => _capturingLogs;
 
-        private RCLogManager()
+        private RConsoleCtrl()
         {
             // 允许默认配置，必要时由 Init 指定
         }
@@ -123,7 +124,8 @@ namespace RConsole.Runtime
             if (log == null) return;
             try
             {
-                _client?.EnqueueEnvelope(new Envelope(EnvelopeKind.C2SLogRecord, log));
+                // _client?.Send(new Envelope(EnvelopeKind.C2SLog, (byte)SubLog.Log, log));
+                _client?.Reqeust(EnvelopeKind.C2SLog, (byte)SubLog.Log, log);
             }
             catch (Exception ex)
             {

@@ -45,23 +45,21 @@
     <Analyzer Include="/Applications/Unity/Hub/Editor/2022.3.62f2/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleFileBrowser.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleDetailView.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/Test/IconHelper.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/Utils/NETUtils.cs" />
-    <Compile Include="Assets/RemoteConsole/Editor/Service/Handler/LogHandler.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/Model/RConsoleViewModel.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/Service/RConsoleServer.cs" />
-    <Compile Include="Assets/RemoteConsole/Editor/Service/Handler/IHandler.cs" />
-    <Compile Include="Assets/RemoteConsole/Editor/Service/Handler/HandlerFactory.cs" />
+    <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleTreeView/RConsoleTreeViewItem.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/Ctrl/RConsoleCtrl.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleClientPop.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleMainWindow.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/Service/RConsoleConnection.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleServerWindow.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleListItemView.cs" />
-    <Compile Include="Assets/RemoteConsole/Editor/Service/Handler/LookinHandler.cs" />
-    <Compile Include="Assets/RemoteConsole/Editor/Service/Handler/HandshakeHandler.cs" />
     <Compile Include="Assets/RemoteConsole/Editor/LCLog.cs" />
+    <Compile Include="Assets/RemoteConsole/Editor/View/RConsoleTreeView/RConsoleTreeView.cs" />
     <Reference Include="UnityEngine">
       <HintPath>/Applications/Unity/Hub/Editor/2022.3.62f2/Unity.app/Contents/Managed/UnityEngine/UnityEngine.dll</HintPath>
     </Reference>

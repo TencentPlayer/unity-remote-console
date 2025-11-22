@@ -4,6 +4,9 @@ namespace RConsole.Runtime
 {
     public abstract class IHandler
     {
-        public abstract Envelope Handle(IBinaryModelBase modelBase);
+
+        public abstract void OnEnable();
+
+        public abstract void OnDisable();
     }
 }

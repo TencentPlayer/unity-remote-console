@@ -11,9 +11,9 @@ namespace RConsole.Common
             return kind switch
             {
                 EnvelopeKind.C2SHandshake => new ClientModel(),
-                EnvelopeKind.C2SLogRecord => new LogModel(),
-                EnvelopeKind.S2CLookin => new LookInReqModel(),
-                EnvelopeKind.C2SLookin => new LookInRespModel(),
+                EnvelopeKind.C2SLog => new LogModel(),
+                EnvelopeKind.S2CLookin => new LookInViewModel(),
+                EnvelopeKind.S2CFile => new FileModel(),
                 _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
             };
         }

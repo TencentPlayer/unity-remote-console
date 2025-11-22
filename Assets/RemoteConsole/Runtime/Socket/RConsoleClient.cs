@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
 using System.Threading;
@@ -28,6 +29,13 @@ namespace RConsole.Runtime
         public event Action<Envelope> ServerEnvelopeReceived;
         public event Action<string> ServerTextReceived;
 
+        private readonly Dictionary<int, Action<Envelope>> _requestHandlers = new Dictionary<int, Action<Envelope>>();
+
+        public delegate Envelope BroadcastHandler(Envelope env);
+
+        private readonly Dictionary<string, List<BroadcastHandler>> _broadcastHandlers =
+            new Dictionary<string, List<BroadcastHandler>>();
+
         public async Task Connect()
         {
             var errMsg = await ConnectAsync();
@@ -36,6 +44,8 @@ namespace RConsole.Runtime
                 Debug.LogWarning("连接失败，错误：" + errMsg);
                 return;
             }
+
+            HandlerFactory.OnEnable();
 
             SendHandshake();
             // 启动发送循环
@@ -58,7 +68,7 @@ namespace RConsole.Runtime
                 appVersion = Application.version,
                 sessionId = _sessionId
             };
-            EnqueueEnvelope(new Envelope(EnvelopeKind.C2SHandshake, hs));
+            Send(new Envelope(EnvelopeKind.C2SHandshake, (byte)SubHandshake.Handshake, hs));
         }
 
         public void Disconnect()
@@ -66,6 +76,7 @@ namespace RConsole.Runtime
             try
             {
                 _ws?.Dispose();
+                HandlerFactory.OnDisable();
             }
             catch (Exception ex)
             {
@@ -88,6 +99,7 @@ namespace RConsole.Runtime
         {
             try
             {
+                HandlerFactory.Initialize();
                 _ws = new ClientWebSocket();
                 var uri = new Uri($"ws://{Host}:{Port}{Path}");
                 Debug.Log($"[客户端]发起连接：{uri}");
@@ -99,19 +111,6 @@ namespace RConsole.Runtime
                 Debug.LogWarning($"[客户端] 连接失败: {ex.Message}");
                 return ex.Message;
             }
-        }
-
-        public void EnqueueEnvelope(Envelope env)
-        {
-#if RC_USE_GOOGLE_PROTOBUF
-            // TODO: 使用 Google.Protobuf 生成的 Envelope 类型进行序列化
-            // var pbEnv = ConvertToProto(env);
-            // var bytes = pbEnv.ToByteArray();
-            // _sendQueue.Enqueue(new ArraySegment<byte>(bytes));
-#else
-            var bytes = env.ToBinary();
-            _sendQueue.Enqueue(new ArraySegment<byte>(bytes));
-#endif
         }
 
         /// <summary>
@@ -186,13 +185,13 @@ namespace RConsole.Runtime
                     var data = ms.ToArray();
                     if (msgType == WebSocketMessageType.Binary)
                     {
-#if RC_USE_GOOGLE_PROTOBUF
-                        Envelope env = null;
-#else
-                        var env = new Envelope(data);
-#endif
                         MainThreadDispatcher.Enqueue(() =>
                         {
+#if RC_USE_GOOGLE_PROTOBUF
+                            Envelope env = null;
+#else
+                            var env = new Envelope(data);
+#endif
                             HandleServerEnvelope(env);
                             ServerEnvelopeReceived?.Invoke(env);
                         });
@@ -211,16 +210,114 @@ namespace RConsole.Runtime
             }
         }
 
+
+        private void Send(Envelope env)
+        {
+#if RC_USE_GOOGLE_PROTOBUF
+            // TODO: 使用 Google.Protobuf 生成的 Envelope 类型进行序列化
+            // var pbEnv = ConvertToProto(env);
+            // var bytes = pbEnv.ToByteArray();
+            // _sendQueue.Enqueue(new ArraySegment<byte>(bytes));
+#else
+            var bytes = env.ToBinary();
+            _sendQueue.Enqueue(new ArraySegment<byte>(bytes));
+#endif
+        }
+
         /// <summary>
         /// 处理服务器发送的 Envelope。
         /// </summary>
         /// <param name="env">服务器发送的 Envelope</param>
         private void HandleServerEnvelope(Envelope env)
         {
-            var handler = HandlerFactory.CreateHandler(env.Kind);
-            var resp = handler?.Handle(env.Model);
-            if (resp == null) return;
-            EnqueueEnvelope(resp);
+            var id = env.Id;
+            if (_requestHandlers.TryGetValue(id, out var handler))
+            {
+                handler?.Invoke(env);
+                _requestHandlers.Remove(id);
+                return;
+            }
+
+            var key = $"{env.Kind}_{env.SubCommandId}";
+            if (_broadcastHandlers.TryGetValue(key, out var handlers))
+            {
+                foreach (var h in handlers)
+                {
+                    var data = h?.Invoke(env);
+                    if (data != null)
+                    {
+                        Send(data);
+                    }
+                }
+            }
+
+            // var handler = HandlerFactory.CreateHandler(env.Kind);
+            // var resp = handler?.Handle(env.SubCommandId, env.Model);
+            // if (resp == null) return;
+            // Send(resp);
+        }
+
+        public void Reqeust(EnvelopeKind kind, byte subCommandId, IBinaryModelBase data,
+            Action<Envelope> handler = null)
+        {
+            var env = new Envelope(kind, subCommandId, data);
+            if (handler != null)
+            {
+                _requestHandlers[env.Id] = handler;
+            }
+
+            Send(env);
+        }
+
+        public void On(EnvelopeKind kind, byte subCommandId, BroadcastHandler handler)
+        {
+            var key = $"{kind}_{subCommandId}";
+            if (!_broadcastHandlers.ContainsKey(key))
+            {
+                _broadcastHandlers[key] = new List<BroadcastHandler>();
+            }
+
+            _broadcastHandlers[key].Add(handler);
+        }
+
+        public void Off(EnvelopeKind kind, byte subCommandId, BroadcastHandler complete = null)
+        {
+            var key = $"{kind}_{subCommandId}";
+            if (complete != null)
+            {
+                var handlers = _broadcastHandlers[key];
+                if (handlers != null)
+                {
+                    // 找到移除
+                    for (int i = handlers.Count - 1; i >= 0; i--)
+                    {
+                        if (handlers[i] == complete)
+                        {
+                            handlers.RemoveAt(i);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _broadcastHandlers.Remove(key);
+            }
+        }
+
+        private void Emit(Envelope env)
+        {
+            var key = $"{env.Kind}_{env.SubCommandId}";
+            if (_broadcastHandlers.ContainsKey(key))
+            {
+                var handlers = _broadcastHandlers[key];
+                if (handlers != null)
+                {
+                    foreach (var handler in handlers)
+                    {
+                        handler?.Invoke(env);
+                    }
+                }
+            }
         }
     }
 }

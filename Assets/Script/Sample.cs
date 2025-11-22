@@ -26,31 +26,31 @@ public class Sample : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        btnConnect.interactable = !RCLogManager.Instance.IsConnected;
-        btnDisconnect.interactable = RCLogManager.Instance.IsConnected;
-        btnForward.interactable = !RCLogManager.Instance.IsCapturingLogs;
-        btnStopForward.interactable = RCLogManager.Instance.IsCapturingLogs;
+        btnConnect.interactable = !RConsoleCtrl.Instance.IsConnected;
+        btnDisconnect.interactable = RConsoleCtrl.Instance.IsConnected;
+        btnForward.interactable = !RConsoleCtrl.Instance.IsCapturingLogs;
+        btnStopForward.interactable = RConsoleCtrl.Instance.IsCapturingLogs;
     }
 
     public void OnConnectClicked()
     {
         PlayerPrefs.SetString("ServerIp", ifServerIp.text);
-        RCLogManager.Instance.Connect(ifServerIp.text);
+        RConsoleCtrl.Instance.Connect(ifServerIp.text);
     }
 
     public void OnDisconnectClicked()
     {
-        RCLogManager.Instance.Disconnect();
+        RConsoleCtrl.Instance.Disconnect();
     }
 
     public void OnForwardClicked()
     {
-        RCLogManager.Instance.ForwardingUnityLog();
+        RConsoleCtrl.Instance.ForwardingUnityLog();
     }
 
     public void OnStopForwardClicked()
     {
-        RCLogManager.Instance.StopForwardingUnityLog();
+        RConsoleCtrl.Instance.StopForwardingUnityLog();
     }
 
     public void OnLogClicked()

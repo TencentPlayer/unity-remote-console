@@ -7,6 +7,7 @@ namespace RConsole.Common
     // 二进制解析基类：提供二进制读取工具
     public abstract class IBinaryModelBase
     {
+        
         public abstract byte[] ToBinary();
 
         public abstract void FromBinary(BinaryReader br);

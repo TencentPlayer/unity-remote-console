@@ -6,19 +6,30 @@ namespace RConsole.Runtime
 {
     public class LookinHandler : IHandler
     {
-        public override Envelope Handle(IBinaryModelBase modelBase)
+        public override void OnEnable()
         {
-            var req = (LookInReqModel)modelBase;
-            var root = BuildTree(req.Path);
-            return new Envelope(EnvelopeKind.C2SLookin, root);
+            RConsoleCtrl.Instance.WebSocket.On(EnvelopeKind.S2CLookin, (byte)SubLookIn.LookIn, OnLookIn);
         }
 
-        private LookInRespModel BuildTree(string path)
+        public override void OnDisable()
+        {
+            RConsoleCtrl.Instance.WebSocket.Off(EnvelopeKind.S2CLookin, (byte)SubLookIn.LookIn, OnLookIn);
+        }
+
+        private Envelope OnLookIn(Envelope env)
+        {
+            var req = (LookInViewModel)env.Model;
+            var root = BuildTree(req.Path);
+            env.Model = root;
+            return env;
+        }
+
+        private LookInViewModel BuildTree(string path)
         {
             if (string.IsNullOrEmpty(path) || path == "/")
             {
                 var scene = SceneManager.GetActiveScene();
-                var model = new LookInRespModel
+                var model = new LookInViewModel
                 {
                     Name = scene.name,
                     Path = "/",
@@ -31,13 +42,14 @@ namespace RConsole.Runtime
                     var child = BuildNode(roots[i], "/" + roots[i].name);
                     model.Children.Add(child);
                 }
+
                 return model;
             }
 
             var go = FindByPath(path);
             if (go == null)
             {
-                return new LookInRespModel
+                return new LookInViewModel
                 {
                     Name = path,
                     Path = path,
@@ -45,12 +57,13 @@ namespace RConsole.Runtime
                     Rect = new Rect()
                 };
             }
+
             return BuildNode(go, path);
         }
 
-        private LookInRespModel BuildNode(GameObject go, string currentPath)
+        private LookInViewModel BuildNode(GameObject go, string currentPath)
         {
-            var model = new LookInRespModel
+            var model = new LookInViewModel
             {
                 Name = go.name,
                 Path = currentPath,
@@ -65,6 +78,7 @@ namespace RConsole.Runtime
                 var childPath = currentPath.EndsWith("/") ? currentPath + c.name : currentPath + "/" + c.name;
                 model.Children.Add(BuildNode(c, childPath));
             }
+
             return model;
         }
 
@@ -77,6 +91,7 @@ namespace RConsole.Runtime
             {
                 if (!string.IsNullOrEmpty(segs[i])) names.Add(segs[i]);
             }
+
             if (names.Count == 0) return null;
             GameObject root = null;
             var roots = scene.GetRootGameObjects();
@@ -88,6 +103,7 @@ namespace RConsole.Runtime
                     break;
                 }
             }
+
             if (root == null) return null;
             var current = root.transform;
             for (int i = 1; i < names.Count; i++)
@@ -95,6 +111,7 @@ namespace RConsole.Runtime
                 current = current.Find(names[i]);
                 if (current == null) return null;
             }
+
             return current.gameObject;
         }
 
@@ -112,6 +129,7 @@ namespace RConsole.Runtime
                     if (canvas.renderMode == RenderMode.ScreenSpaceCamera || canvas.renderMode == RenderMode.WorldSpace)
                         cam = canvas.worldCamera;
                 }
+
                 var p0 = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
                 var p2 = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
                 var minX = Mathf.Min(p0.x, p2.x);
@@ -137,6 +155,7 @@ namespace RConsole.Runtime
                     return new Rect(minX, minY, w, h);
                 }
             }
+
             return new Rect();
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using RConsole.Common;
 using UnityEngine;
@@ -13,6 +14,11 @@ namespace RConsole.Editor
         private readonly object _lock = new object();
         private ClientModel _client = new ClientModel();
         public ClientModel ClientModel => _client;
+
+        private readonly Dictionary<int, Action<Envelope>> _requestHandlers = new Dictionary<int, Action<Envelope>>();
+
+        private readonly Dictionary<string, List<RConsoleServer.BroadcastHandler>> _broadcastHandlers =
+            new Dictionary<string, List<RConsoleServer.BroadcastHandler>>();
 
         protected override void OnOpen()
         {
@@ -29,6 +35,8 @@ namespace RConsole.Editor
                         connectedAt = DateTime.UtcNow
                     };
                 }
+
+                RConsoleServer.Connections[id] = this;
 
                 LCLog.Log($"[服务]客户端连接：{remoteStr} (id={id})");
             });
@@ -61,8 +69,9 @@ namespace RConsole.Editor
             var id = ID;
             MainThreadDispatcher.Enqueue(() =>
             {
-                RConsoleCtrl.Instance.RemoveConnectedClient(this);
+                RConsoleCtrl.Instance.RemoveConnectedClient(_client);
                 _client = null;
+                RConsoleServer.Connections.Remove(id);
                 LCLog.Log($"[服务]客户端断开：id={id} ({e.Code})");
             });
         }
@@ -123,17 +132,45 @@ namespace RConsole.Editor
                     _client.appName = clientInfo.appName;
                     _client.appVersion = clientInfo.appVersion;
                     _client.sessionId = clientInfo.sessionId;
+
+                    clientInfo.connectID = _client.connectID;
+                    clientInfo.address = _client.address;
+                    clientInfo.connectedAt = _client.connectedAt;
                 }
+
                 LCLog.Log($"[服务]握手成功：{clientInfo.deviceName} ");
             }
-            var handler = HandlerFactory.CreateHandler(env.Kind);
-            var respEnv = handler?.Handle(this, env.Model);
-            if (respEnv == null) return;
-            Send(respEnv.ToBinary());
+
+            var id = env.Id;
+            if (_requestHandlers.TryGetValue(id, out var handler))
+            {
+                handler?.Invoke(env);
+                _requestHandlers.Remove(id);
+                return;
+            }
+
+            RConsoleServer.Emit(this, env);
+
+
+            // var handler = HandlerFactory.CreateHandler(env.Kind);
+            // var respEnv = handler?.Handle(this, env.SubCommandId, env.Model);
+            // if (respEnv == null) return;
+            // Send(respEnv.ToBinary());
         }
 
         public void SendEnvelop(Envelope env)
         {
+            Send(env.ToBinary());
+        }
+
+        public void Reqeust(EnvelopeKind kind, byte subCommandId, IBinaryModelBase data, Action<Envelope> handler)
+        {
+            var env = new Envelope(kind, subCommandId, data);
+            if (handler != null)
+            {
+                _requestHandlers[env.Id] = handler;
+            }
+
             Send(env.ToBinary());
         }
     }

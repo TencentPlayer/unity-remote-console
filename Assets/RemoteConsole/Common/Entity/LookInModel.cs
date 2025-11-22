@@ -5,44 +5,9 @@ using UnityEngine;
 namespace RConsole.Common
 {
     /// <summary>
-    /// 请求查看界面
-    /// </summary>
-    public class LookInReqModel : IBinaryModelBase
-    {
-        /// <summary>
-        /// 节点路径, / 表示根目录
-        /// </summary>
-        public string Path { get; set; } = string.Empty;
-
-        public LookInReqModel()
-        {
-        }
-
-        public LookInReqModel(string path)
-        {
-            Path = path;
-        }
-
-        public override byte[] ToBinary()
-        {
-            using (var ms = new MemoryStream())
-            using (var bw = new BinaryWriter(ms))
-            {
-                bw.Write(Path);
-                return ms.ToArray();
-            }
-        }
-
-        public override void FromBinary(BinaryReader br)
-        {
-            Path = br.ReadString();
-        }
-    }
-
-    /// <summary>
     /// 响应查看界面数据
     /// </summary>
-    public class LookInRespModel : IBinaryModelBase
+    public class LookInViewModel : IBinaryModelBase
     {
         /// <summary>
         /// 节点名称
@@ -67,7 +32,7 @@ namespace RConsole.Common
         /// <summary>
         /// 子节点列表
         /// </summary>
-        public List<LookInRespModel> Children { get; set; } = new List<LookInRespModel>();
+        public List<LookInViewModel> Children { get; set; } = new List<LookInViewModel>();
 
         public override byte[] ToBinary()
         {
@@ -101,7 +66,7 @@ namespace RConsole.Common
             Children.Clear();
             for (int i = 0; i < childCount; i++)
             {
-                var child = new LookInRespModel();
+                var child = new LookInViewModel();
                 child.FromBinary(br);
                 Children.Add(child);
             }

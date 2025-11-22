@@ -46,7 +46,7 @@ namespace RConsole.Runtime
                 threadId = System.Threading.Thread.CurrentThread.ManagedThreadId
             };
 
-            RCLogManager.Instance.SendLog(model);
+            RConsoleCtrl.Instance.SendLog(model);
         }
     }
 }

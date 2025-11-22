@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using RConsole.Common;
 using WebSocketSharp.Server;
@@ -14,11 +15,15 @@ namespace RConsole.Editor
 
         public string Status => IsStarted ? $"Running ws://0.0.0.0:{Port}{Path}" : "Stopped";
 
-        // 在部分 macOS/Mono 环境下，HttpListener 的 IsWebSocketRequest 可能不可靠
-        // 开启该选项后，将基于 Upgrade/Connection 头部尝试强制握手
-        public bool ForceAcceptOnUpgradeHeader { get; set; } = true;
-
         private WebSocketServer _wsServer;
+
+        public delegate Envelope BroadcastHandler(RConsoleConnection connection, Envelope env);
+
+        public static Dictionary<string, List<RConsoleServer.BroadcastHandler>> _broadcastHandlers =
+            new Dictionary<string, List<RConsoleServer.BroadcastHandler>>();
+
+        public static Dictionary<string, RConsoleConnection> Connections = new Dictionary<string, RConsoleConnection>();
+
 
         public void Start()
         {
@@ -60,7 +65,14 @@ namespace RConsole.Editor
 
             try
             {
-                try { _wsServer?.Stop(); } catch { }
+                try
+                {
+                    _wsServer?.Stop();
+                }
+                catch
+                {
+                }
+
                 _wsServer = null;
                 RConsoleCtrl.Instance.ServerDisconnected();
             }
@@ -76,6 +88,60 @@ namespace RConsole.Editor
             }
         }
 
-        // 逻辑由 RConsoleBehaviour 管理
+
+        public static void On(EnvelopeKind kind, byte subCommandId, BroadcastHandler handler)
+        {
+            var key = $"{kind}_{subCommandId}";
+            if (!_broadcastHandlers.ContainsKey(key))
+            {
+                _broadcastHandlers[key] = new List<BroadcastHandler>();
+            }
+
+            _broadcastHandlers[key].Add(handler);
+        }
+
+        public static void Off(EnvelopeKind kind, byte subCommandId, BroadcastHandler handler = null)
+        {
+            var key = $"{kind}_{subCommandId}";
+            if (handler != null)
+            {
+                var handlers = _broadcastHandlers[key];
+                if (handlers != null)
+                {
+                    // 找到移除
+                    for (int i = handlers.Count - 1; i >= 0; i--)
+                    {
+                        if (handlers[i] == handler)
+                        {
+                            handlers.RemoveAt(i);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _broadcastHandlers.Remove(key);
+            }
+        }
+
+        public static void Emit(RConsoleConnection connection, Envelope env)
+        {
+            var key = $"{env.Kind}_{env.SubCommandId}";
+            if (_broadcastHandlers.ContainsKey(key))
+            {
+                var handlers = _broadcastHandlers[key];
+                if (handlers != null)
+                {
+                    foreach (var handler in handlers)
+                    {
+                        var data = handler?.Invoke(connection, env);
+                        if (data != null)
+                        {
+                            connection.SendEnvelop(data);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

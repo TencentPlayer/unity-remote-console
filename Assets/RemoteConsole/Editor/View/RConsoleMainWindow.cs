@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using RConsole.Common;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -194,6 +195,11 @@ namespace RConsole.Editor
             var iconFolder = EditorGUIUtility.IconContent("Folder");
             if (GUILayout.Button(new GUIContent(iconFolder.image, "【File Browser】查看连接设备的沙盒文件"), EditorStyles.toolbarButton, GUILayout.ExpandWidth(false)))
             {
+                var connection = RConsoleCtrl.Instance.GetSelectConnection();
+                if (connection != null)
+                {
+                    RConsoleFileBrowser.ShowWindow();
+                }
             }
 
             // 搜索框紧随其后，宽度固定为 200
