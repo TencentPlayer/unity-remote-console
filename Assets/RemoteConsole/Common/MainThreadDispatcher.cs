@@ -53,8 +53,9 @@ namespace RConsole.Common
                 {
                     next();
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Debug.LogError(e);
                     // 静默异常，避免中断 Editor 循环
                 }
             }

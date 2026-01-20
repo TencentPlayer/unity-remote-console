@@ -11,12 +11,14 @@ namespace RConsole.Runtime
         {
             RCCapability.Instance.WebSocket.On(EnvelopeKind.S2CFile, (byte)SubFile.FetchDirectory, OnFetchDirectory);
             RCCapability.Instance.WebSocket.On(EnvelopeKind.S2CFile, (byte)SubFile.MD5, OnFetchMD5);
+            RCCapability.Instance.WebSocket.On(EnvelopeKind.S2CFile, (byte)SubFile.Download, OnDownload);
         }
 
         public override void OnDisable()
         {
             RCCapability.Instance.WebSocket.Off(EnvelopeKind.S2CFile, (byte)SubFile.FetchDirectory, OnFetchDirectory);
             RCCapability.Instance.WebSocket.Off(EnvelopeKind.S2CFile, (byte)SubFile.MD5, OnFetchMD5);
+            RCCapability.Instance.WebSocket.Off(EnvelopeKind.S2CFile, (byte)SubFile.Download, OnDownload);
         }
 
         private IBinaryModelBase OnFetchDirectory(IBinaryModelBase model)
@@ -38,6 +40,26 @@ namespace RConsole.Runtime
             path = RCCapability.Instance.PathRoot + path;
             var md5 = SafeGetFileMD5(path);
             req.MD5 = md5;
+            return req;
+        }
+
+        private IBinaryModelBase OnDownload(IBinaryModelBase model)
+        {
+            var req = (FileModel)model;
+            var path = req.Path;
+            path = path.Replace(RCCapability.Instance.PathRoot, "");
+            path = RCCapability.Instance.PathRoot + path;
+            try
+            {
+                if (File.Exists(path))
+                {
+                    req.Data = File.ReadAllBytes(path);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"读取文件 {path} 失败: {e}");
+            }
             return req;
         }
 

@@ -99,6 +99,7 @@ namespace RConsole.Editor
             else
             {
                 menu.AddItem(new GUIContent("获取信息"), false, () => { RConsoleCtrl.Instance.RequestFileMD5(req); });
+                menu.AddItem(new GUIContent("下载文件到本地"), false, () => { RConsoleCtrl.Instance.DownloadFile(req); });
             }
             menu.ShowAsContext();
         }

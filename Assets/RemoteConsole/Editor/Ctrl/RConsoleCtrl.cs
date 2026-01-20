@@ -92,6 +92,41 @@ namespace RConsole.Editor
             });
         }
 
+        public void DownloadFile(FileModel body)
+        {
+            var connection = GetSelectConnection();
+            if (connection == null) return;
+
+            string fileName = System.IO.Path.GetFileName(body.Path);
+            string extension = System.IO.Path.GetExtension(fileName).TrimStart('.');
+            string savePath = EditorUtility.SaveFilePanel("保存文件", "", fileName, extension);
+
+            if (string.IsNullOrEmpty(savePath)) return;
+
+            LCLog.Log($"开始下载文件: {body.Path} ...");
+
+            connection.Reqeust(EnvelopeKind.S2CFile, (byte)SubFile.Download, body, model =>
+            {
+                var resp = model as FileModel;
+                if (resp == null || resp.Data == null)
+                {
+                    LCLog.LogError("下载文件失败或文件为空");
+                    return;
+                }
+
+                try
+                {
+                    System.IO.File.WriteAllBytes(savePath, resp.Data);
+                    LCLog.Log($"文件已保存到: {savePath}");
+                    EditorUtility.RevealInFinder(savePath);
+                }
+                catch (Exception ex)
+                {
+                    LCLog.LogError($"保存文件失败: {ex.Message}");
+                }
+            });
+        }
+
         public RConsoleConnection GetSelectConnection()
         {
             if (!_server.IsStarted)

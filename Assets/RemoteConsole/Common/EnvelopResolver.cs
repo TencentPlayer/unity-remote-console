@@ -20,6 +20,7 @@ namespace RConsole.Common
             Register(EnvelopeKind.S2CFile, (byte)SubFile.FetchDirectory, () => new FileModel(),
                 () => new FileModel());
             Register(EnvelopeKind.S2CFile, (byte)SubFile.MD5, () => new FileModel(), () => new FileModel());
+            Register(EnvelopeKind.S2CFile, (byte)SubFile.Download, () => new FileModel(), () => new FileModel());
         }
 
         public static void OnDisable()

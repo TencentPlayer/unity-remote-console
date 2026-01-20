@@ -216,6 +216,11 @@ namespace RConsole.Runtime
                             {
                                 model = EnvelopResolver.GetRequest(env.Kind, env.SubKind);
                             }
+                            if (model == null)
+                            {
+                                Debug.LogWarning($"[客户端] 未注册(EnvelopResolver)处理程序 Kind={env.Kind}, SubKind={env.SubKind}");
+                                return;
+                            }
                             model.FromBinary(env.Data);
 
                             HandleServerEnvelope(env, model);

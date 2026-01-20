@@ -70,6 +70,11 @@ namespace RConsole.Common
         /// </summary>
         public List<FileModel> Children { get; set; } = new List<FileModel>();
 
+        /// <summary>
+        /// 文件数据
+        /// </summary>
+        public byte[] Data { get; set; } = null;
+
 
         public override byte[] ToBinary()
         {
@@ -83,6 +88,18 @@ namespace RConsole.Common
                 bw.Write(Length);
                 bw.Write(LastWriteTime);
                 bw.Write(MD5);
+                
+                if (Data != null)
+                {
+                    bw.Write(true);
+                    bw.Write(Data.Length);
+                    bw.Write(Data);
+                }
+                else
+                {
+                    bw.Write(false);
+                }
+
                 bw.Write(Children.Count);
                 for (int i = 0; i < Children.Count; i++)
                 {
@@ -102,6 +119,18 @@ namespace RConsole.Common
             Length = br.ReadInt64();
             LastWriteTime = br.ReadInt64();
             MD5 = br.ReadString();
+
+            bool hasData = br.ReadBoolean();
+            if (hasData)
+            {
+                int len = br.ReadInt32();
+                Data = br.ReadBytes(len);
+            }
+            else
+            {
+                Data = null;
+            }
+
             int childCount = br.ReadInt32();
             for (int i = 0; i < childCount; i++)
             {
